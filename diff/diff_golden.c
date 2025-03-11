@@ -21,10 +21,6 @@ gsl_diff_backward (const gsl_function * f,
       a[i] = x + (i - 2.0) * h;
       d[i] = GSL_FN_EVAL (f, a[i]);
     }
-  for (size_t i = 0; i < 3; i++)
-  {
-    printf("%.15f \n", a[i]);
-  }
   // k = 1, 2, 3
 
   for (k = 1; k < 4; k++)

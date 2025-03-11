@@ -49,27 +49,16 @@ main ()
   double result_1, result_2, result_3 = 0;
   double abserr_1, abserr_2, abserr_3 = 0;
 
+  for (size_t i = 0; i < 1000000; i++)
+  {
   gsl_diff_backward(&F1, 1.5, &result_1, &abserr_1);
   gsl_diff_backward(&F2, 1.5, &result_2, &abserr_2);
   gsl_diff_backward(&F3, 1.5, &result_3, &abserr_3);
-
-  printf("backward1; res: %f; err: %f\n", result_1, abserr_1);
-  printf("backward2; res: %f; err: %f\n", result_2, abserr_2);
-  printf("backward3; res: %f; err: %f\n", result_3, abserr_3);
-
   gsl_diff_forward(&F1, 1.5, &result_1, &abserr_1);
   gsl_diff_forward(&F2, 1.5, &result_2, &abserr_2);
   gsl_diff_forward(&F3, 1.5, &result_3, &abserr_3);
-  
-  printf("forward1; res: %f; err: %f\n", result_1, abserr_1);
-  printf("forward2; res: %f; err: %f\n", result_2, abserr_2);
-  printf("forward3; res: %f; err: %f\n", result_3, abserr_3);
-  
   gsl_diff_central(&F1, 1.5, &result_1, &abserr_1);
   gsl_diff_central(&F2, 1.5, &result_2, &abserr_2);
   gsl_diff_central(&F3, 1.5, &result_3, &abserr_3);  
-
-  printf("central1; res: %f; err: %f\n", result_1, abserr_1);
-  printf("central2; res: %f; err: %f\n", result_2, abserr_2);
-  printf("central3; res: %f; err: %f\n", result_3, abserr_3);
+  }
 }

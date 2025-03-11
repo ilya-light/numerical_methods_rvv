@@ -25,10 +25,6 @@ gsl_diff_backward (const gsl_function * f,
   vec_a = vfmacc_vf_f64m2 (vec_a, h, vec_k, vl);
   vse_v_f64m2(a, vec_a, vl);
 
-  for (size_t i = 0; i < 3; i++)
-  {
-    printf("%.15f \n", a[i]);
-  }
   
 
   for (i = 0; i < 3; i++)
@@ -98,10 +94,15 @@ gsl_diff_forward (const gsl_function * f,
 
   /* Algorithm based on description on pg. 204 of Conte and de Boor
      (CdB) - coefficients of Newton form of polynomial of degree 2. */
+  double koef[3] = {0,1,2};
+  size_t vl = vsetvl_e64m2(3);
+  vfloat64m2_t vec_a = vfmv_v_f_f64m2(x, vl);
+  vfloat64m2_t vec_k = vle_v_f64m2(koef, vl);
 
+  vec_a = vfmacc_vf_f64m2 (vec_a, h, vec_k, vl);
+  vse_v_f64m2(a, vec_a, vl);
   for (i = 0; i < 3; i++)
     {
-      a[i] = x + i * h;
       d[i] = GSL_FN_EVAL (f, a[i]);
     }
 
@@ -116,7 +117,6 @@ gsl_diff_forward (const gsl_function * f,
   /* Adapt procedure described on pg. 282 of CdB to find best value of
      step size. */
 
-  size_t vl = 0;
   
   vl = vsetvl_e64m2(3); 
   
@@ -158,7 +158,13 @@ gsl_diff_central (const gsl_function * f,
 
   /* Algorithm based on description on pg. 204 of Conte and de Boor
      (CdB) - coefficients of Newton form of polynomial of degree 3. */
+double koef[4] = {-2,-1,0,1};
+  size_t vl = vsetvl_e64m2(4);
+  vfloat64m2_t vec_a = vfmv_v_f_f64m2(x, vl);
+  vfloat64m2_t vec_k = vle_v_f64m2(koef, vl);
 
+  vec_a = vfmacc_vf_f64m2 (vec_a, h, vec_k, vl);
+  vse_v_f64m2(a, vec_a, vl);
   for (i = 0; i < 4; i++)
     {
       a[i] = x + (i - 2.0) * h;
@@ -176,7 +182,6 @@ gsl_diff_central (const gsl_function * f,
   /* Adapt procedure described on pg. 282 of CdB to find best
      value of step size. */
 
-  size_t vl = 0;
   size_t vlmax = vsetvlmax_e64m2();
   vl = vsetvl_e64m2(4);
   vfloat64m2_t vec_d = vle_v_f64m2(d, vl);
