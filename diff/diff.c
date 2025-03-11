@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <math.h>
-#include "../gsl_rvv_math.h"
-#include "gsl_rvv_diff.h"
 #include <stdio.h>
 
-int
-gsl_diff_backward (const gsl_function * f,
+#include "diff.h"
+
+int gsl_diff_backward (double (*f)(double),
                    double x, double *result, double *abserr)
 {
 
@@ -13,32 +12,19 @@ gsl_diff_backward (const gsl_function * f,
   double h = GSL_SQRT_DBL_EPSILON;
   double a[3], d[3], a2;
 
-  // i = 0, 1, 2
-  // a = x - 2h, x - h, x
-  // d = f(x - 2h), f(x - h), f(x)
   for (i = 0; i < 3; i++)
     {
       a[i] = x + (i - 2.0) * h;
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
-  // k = 1, 2, 3
 
   for (k = 1; k < 4; k++)
     {
-      // i = 0, 1
-      // d[0] = (d[1]-d[0]) / (h)
-      // d[1] = (d[2]-d[1]) / (h)
-      
-      // i = 0
-      // d[0] = (d[1]-d[0]) / (2h) = (d[2] - 2d[1] + d[0])/2h^2
       for (i = 0; i < 3 - k; i++)
         {
           d[i] = (d[i + 1] - d[i]) / (a[i + k] - a[i]);
         }
     }
-
-  /* Adapt procedure described on pg. 282 of CdB to find best value of
-     step size. */
 
   a2 = fabs (d[0] + d[1] + d[2]);
 
@@ -54,14 +40,13 @@ gsl_diff_backward (const gsl_function * f,
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x) - GSL_FN_EVAL (f, x - h)) / h;
+  *result = (f(x) - f(x - h)) / h;
   *abserr = fabs (10.0 * a2 * h);
 
   return 0;
 }
 
-int
-gsl_diff_forward (const gsl_function * f,
+int gsl_diff_forward (double (*f)(double),
                   double x, double *result, double *abserr)
 {
   /* Construct a divided difference table with a fairly large step
@@ -78,7 +63,7 @@ gsl_diff_forward (const gsl_function * f,
   for (i = 0; i < 3; i++)
     {
       a[i] = x + i * h;
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
 
   for (k = 1; k < 4; k++)
@@ -106,14 +91,13 @@ gsl_diff_forward (const gsl_function * f,
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x + h) - GSL_FN_EVAL (f, x)) / h;
+  *result = (f(x + h) - f(x)) / h;
   *abserr = fabs (10.0 * a2 * h);
 
   return 0;
 }
 
-int
-gsl_diff_central (const gsl_function * f,
+int gsl_diff_central (double (*f)(double),
                   double x, double *result, double *abserr)
 {
   /* Construct a divided difference table with a fairly large step
@@ -130,7 +114,7 @@ gsl_diff_central (const gsl_function * f,
   for (i = 0; i < 4; i++)
     {
       a[i] = x + (i - 2.0) * h;
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
 
   for (k = 1; k < 5; k++)
@@ -158,7 +142,7 @@ gsl_diff_central (const gsl_function * f,
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x + h) - GSL_FN_EVAL (f, x - h)) / (2.0 * h);
+  *result = (f(x + h) - f(x - h)) / (2.0 * h);
   *abserr = fabs (100.0 * a3 * h * h);
 
   return 0;

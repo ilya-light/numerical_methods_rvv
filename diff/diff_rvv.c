@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "../gsl_rvv_math.h"
-#include "gsl_rvv_diff.h"
 #include <riscv-vector.h>
+#include "diff.h"
 
-int
-gsl_diff_backward (const gsl_function * f,
+
+int gsl_diff_backward (double (*f)(double),
                    double x, double *result, double *abserr)
 {
 
@@ -14,9 +13,7 @@ gsl_diff_backward (const gsl_function * f,
   double h = GSL_SQRT_DBL_EPSILON;
   double a[3], d[3], a2;
 
-  // i = 0, 1, 2
-  // a = x - 2h, x - h, x
-  // d = f(x - 2h), f(x - h), f(x)
+  
   double koef[3] = {-2,-1,0};
   size_t vl = vsetvl_e64m2(3);
   vfloat64m2_t vec_a = vfmv_v_f_f64m2(x, vl);
@@ -24,35 +21,19 @@ gsl_diff_backward (const gsl_function * f,
 
   vec_a = vfmacc_vf_f64m2 (vec_a, h, vec_k, vl);
   vse_v_f64m2(a, vec_a, vl);
-
-  
-
   for (i = 0; i < 3; i++)
     {
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
-
-  // k = 1, 2, 3
 
   for (k = 1; k < 4; k++)
     {
-      // i = 0, 1
-      // d[0] = (d[1]-d[0]) / (h)
-      // d[1] = (d[2]-d[1]) / (h)
-      
-      // i = 0
-      // d[0] = (d[1]-d[0]) / (2h) = (d[2] - 2d[1] + d[0])/2h^2
       for (i = 0; i < 3 - k; i++)
         {
           d[i] = (d[i + 1] - d[i]) / (a[i + k] - a[i]);
         }
     }
 
-  
-  //vlmax = vlen * lmul / sew
-  // vl - длина регистра в элементах
-  
-  // sew = 64 (double) lmul = 2  vlen = 128 (const)
   vl = vsetvl_e64m2(3); 
   // становится равной 3, vlmax при этом 4.
   
@@ -74,26 +55,21 @@ gsl_diff_backward (const gsl_function * f,
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x) - GSL_FN_EVAL (f, x - h)) / h;
+  *result = (f(x) - f(x - h)) / h;
   *abserr = fabs (10.0 * a2 * h);
 
   return 0;
 }
 
+
 int
-gsl_diff_forward (const gsl_function * f,
+gsl_diff_forward (double (*f)(double),
                   double x, double *result, double *abserr)
 {
-  /* Construct a divided difference table with a fairly large step
-     size to get a very rough estimate of f''.  Use this to estimate
-     the step size which will minimize the error in calculating f'. */
-
   int i, k;
   double h = GSL_SQRT_DBL_EPSILON;
   double a[3], d[3], a2;
 
-  /* Algorithm based on description on pg. 204 of Conte and de Boor
-     (CdB) - coefficients of Newton form of polynomial of degree 2. */
   double koef[3] = {0,1,2};
   size_t vl = vsetvl_e64m2(3);
   vfloat64m2_t vec_a = vfmv_v_f_f64m2(x, vl);
@@ -103,7 +79,7 @@ gsl_diff_forward (const gsl_function * f,
   vse_v_f64m2(a, vec_a, vl);
   for (i = 0; i < 3; i++)
     {
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
 
   for (k = 1; k < 4; k++)
@@ -138,14 +114,14 @@ gsl_diff_forward (const gsl_function * f,
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x + h) - GSL_FN_EVAL (f, x)) / h;
+  *result = (f(x + h) - f(x)) / h;
   *abserr = fabs (10.0 * a2 * h);
 
   return 0;
 }
 
 int
-gsl_diff_central (const gsl_function * f,
+gsl_diff_central (double (*f)(double),
                   double x, double *result, double *abserr)
 {
   /* Construct a divided difference table with a fairly large step
@@ -168,7 +144,7 @@ double koef[4] = {-2,-1,0,1};
   for (i = 0; i < 4; i++)
     {
       a[i] = x + (i - 2.0) * h;
-      d[i] = GSL_FN_EVAL (f, a[i]);
+      d[i] = f(a[i]);
     }
 
   for (k = 1; k < 5; k++)
@@ -205,7 +181,7 @@ double koef[4] = {-2,-1,0,1};
       h = 100.0 * GSL_SQRT_DBL_EPSILON;
     }
 
-  *result = (GSL_FN_EVAL (f, x + h) - GSL_FN_EVAL (f, x - h)) / (2.0 * h);
+  *result = (f(x + h) - f(x - h)) / (2.0 * h);
   *abserr = fabs (100.0 * a3 * h * h);
 
   return 0;

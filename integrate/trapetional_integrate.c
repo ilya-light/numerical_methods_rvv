@@ -1,6 +1,5 @@
-#include "simple_plain.h"
 #include <math.h>
-#include <riscv-vector.h>
+#include "trapetional_integrate.h"
 
 double uniform_random() {
     return (double)rand() / (double)RAND_MAX;
