@@ -1,36 +1,73 @@
-#include "rk4.h"
-
+#include <time.h>
 #include <math.h>
+#include "rk.h"
 
-const int n = 50000;
+int N = 0;
+const int TEST_COUNT = 30;
 
-// Определение функций роста, зависящих от времени
-double a1(double t) {
-    return 0.1 + 0.05 * sin(0.1 * t); // Пример функции роста для первого вида
-}
-
-// Определение функции, представляющей систему ОДУ
 void f(double t, double y[], double dydt[]) {
-    double b1 = 0.02; // Коэффициент взаимодействия для первого вида
-    double c1 = 0.01; // Влияние третьего вида на первый
-
-    for (int i = 0; i < n; i++)
+    double b1 = 0.02; 
+    double c1 = 0.01; 
+    dydt[0] = t;
+    for (int i = 1; i < N; i++)
     {
-        dydt[i] = a1(t) * y[0] - b1 * y[i] * y[1] + c1 * y[2];
+        dydt[i] = t * y[i-1];
     }
 }
 
-int main() {
-    double t0 = 0.0; // Начальное время
-    double * y0 = (double*)malloc(sizeof(double) * n);
-    for (int i = 0; i < n; i++)
-    {
-        y0[i] = i;
-    }
-    
-    double t_end = 50.0; // Конечное время
-    double h = 0.1; // Шаг интегрирования
+int main()
+{
+    FILE *file = fopen("results_vector.txt", "w");
 
-    runge_kutta(&f, t0, y0, t_end, h, n); // Вызов функции Рунге-Кутты
+    for (int i = 2; i < 1000; i*=2)
+    {
+        N = i;
+        
+        double t0 = 0.0;
+        double * y0 = (double*)malloc(sizeof(double) * N);
+        double * y = (double*)malloc(sizeof(double) * N);
+        double t_end = 5.0;
+        double h = 0.1;
+        for (int i = 0; i < N; i++)
+        {
+            y0[i] = i;
+        }
+
+        double sum = 0;
+
+        for (size_t i = 0; i < TEST_COUNT; i++)
+        {
+            clock_t start = clock();
+            rkf45(&f, t0, y0, y, t_end, h, N);
+            clock_t end = clock();
+            sum += ((double)(end - start))/CLOCKS_PER_SEC;
+        }
+        fprintf(file, "rkf45,%d,%.6f\n", N, sum / TEST_COUNT);
+        
+        sum = 0;
+        for (size_t i = 0; i < TEST_COUNT; i++)
+        {
+            clock_t start = clock();
+            rk2(&f, t0, y0, y, t_end, h, N);
+            clock_t end = clock();
+            sum += ((double)(end - start))/CLOCKS_PER_SEC;
+        }
+        fprintf(file, "rk2,%d,%.6f\n", N, sum / TEST_COUNT);
+        
+        sum = 0;
+        for (size_t i = 0; i < TEST_COUNT; i++)
+        {
+            clock_t start = clock();
+            rk4(&f, t0, y0, y, t_end, h, N);
+            clock_t end = clock();
+            sum += ((double)(end - start))/CLOCKS_PER_SEC;
+        }
+        fprintf(file, "rk4,%d,%.6f\n", N, sum / TEST_COUNT);
+        
+        free(y0);
+        free(y);
+    }
+
+    fclose(file);
     return 0;
 }
