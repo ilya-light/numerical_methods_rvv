@@ -2,12 +2,22 @@
 #include <math.h>
 #include "rk.h"
 
+#define FILENAME_SIZE 30
+
 int N = 0;
-const int TEST_COUNT = 30;
+const int TEST_COUNT = 100;
+
+struct method_params_t
+{
+    void (*f)(double, double *, double *);
+    double t0;
+    double * y0;
+    double * y;
+    double t_end;
+    double h;
+};
 
 void f(double t, double y[], double dydt[]) {
-    double b1 = 0.02; 
-    double c1 = 0.01; 
     dydt[0] = t;
     for (int i = 1; i < N; i++)
     {
@@ -15,57 +25,55 @@ void f(double t, double y[], double dydt[]) {
     }
 }
 
-int main()
+double test_method(void (*method)(void (*)(double, double *, double *), double, double *, double *, double, double, int),
+                    struct method_params_t params)
 {
-    FILE *file = fopen("results_vector.txt", "w");
+    double sum = 0;
 
-    for (int i = 2; i < 1000; i*=2)
+    for (size_t i = 0; i < TEST_COUNT; i++)
+    {
+        clock_t start = clock();
+        method(params.f, params.t0, params.y0, params.y, params.t_end, params.h, N);
+        clock_t end = clock();
+        sum += ((double)(end - start))/CLOCKS_PER_SEC;
+    }
+    return sum / TEST_COUNT;
+}
+
+int main(int argc, char *argv[])
+{
+    char filename[FILENAME_SIZE]; 
+    if(argc > 1 && argv[1] == "-v")
+    {
+        strncpy(filename, "results_vector.txt", FILENAME_SIZE);
+    }
+    else
+    {
+        strncpy(filename, "results_scalar.txt", FILENAME_SIZE);
+    }
+    FILE *file = fopen(filename, "w");
+
+    for (int i = 2; i <= 512; i*=2)
     {
         N = i;
         
-        double t0 = 0.0;
-        double * y0 = (double*)malloc(sizeof(double) * N);
-        double * y = (double*)malloc(sizeof(double) * N);
-        double t_end = 5.0;
-        double h = 0.1;
+        struct method_params_t params;
+        params.t0 = 0.0;
+        params.y0 = (double*)malloc(sizeof(double) * N);
+        params.y = (double*)malloc(sizeof(double) * N);
+        params.t_end = 5.0;
+        params.h = 0.1;
         for (int i = 0; i < N; i++)
         {
-            y0[i] = i;
+            params.y0[i] = i;
         }
 
-        double sum = 0;
-
-        for (size_t i = 0; i < TEST_COUNT; i++)
-        {
-            clock_t start = clock();
-            rkf45(&f, t0, y0, y, t_end, h, N);
-            clock_t end = clock();
-            sum += ((double)(end - start))/CLOCKS_PER_SEC;
-        }
-        fprintf(file, "rkf45,%d,%.6f\n", N, sum / TEST_COUNT);
+        fprintf(file, "rkf45,%d,%.6f\n", N, test_method(&rkf45, params));
+        fprintf(file, "rk2,%d,%.6f\n", N, test_method(&rkf45, params));
+        fprintf(file, "rk4,%d,%.6f\n", N, test_method(&rkf45, params));
         
-        sum = 0;
-        for (size_t i = 0; i < TEST_COUNT; i++)
-        {
-            clock_t start = clock();
-            rk2(&f, t0, y0, y, t_end, h, N);
-            clock_t end = clock();
-            sum += ((double)(end - start))/CLOCKS_PER_SEC;
-        }
-        fprintf(file, "rk2,%d,%.6f\n", N, sum / TEST_COUNT);
-        
-        sum = 0;
-        for (size_t i = 0; i < TEST_COUNT; i++)
-        {
-            clock_t start = clock();
-            rk4(&f, t0, y0, y, t_end, h, N);
-            clock_t end = clock();
-            sum += ((double)(end - start))/CLOCKS_PER_SEC;
-        }
-        fprintf(file, "rk4,%d,%.6f\n", N, sum / TEST_COUNT);
-        
-        free(y0);
-        free(y);
+        free(params.y0);
+        free(params.y);
     }
 
     fclose(file);
