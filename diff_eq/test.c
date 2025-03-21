@@ -1,5 +1,6 @@
 #include <time.h>
 #include <math.h>
+#include <string.h>
 #include "rk.h"
 
 #define FILENAME_SIZE 30
@@ -25,19 +26,18 @@ void f(double t, double y[], double dydt[]) {
     }
 }
 
-double test_method(void (*method)(void (*)(double, double *, double *), double, double *, double *, double, double, int),
-                    struct method_params_t params)
+void test_method(void (*method)(void (*)(double, double *, double *), double, double *, double *, double, double, int),
+                    struct method_params_t* params,
+                    FILE* file,
+                    const char* method_name)
 {
-    double sum = 0;
-
     for (size_t i = 0; i < TEST_COUNT; i++)
     {
         clock_t start = clock();
-        method(params.f, params.t0, params.y0, params.y, params.t_end, params.h, N);
+        method(params->f, params->t0, params->y0, params->y, params->t_end, params->h, N);
         clock_t end = clock();
-        sum += ((double)(end - start))/CLOCKS_PER_SEC;
+        fprintf(file, "%s,%d,%.6f\n", method_name, N, ((double)(end - start))/CLOCKS_PER_SEC);
     }
-    return sum / TEST_COUNT;
 }
 
 int main(int argc, char *argv[])
@@ -57,23 +57,25 @@ int main(int argc, char *argv[])
     {
         N = i;
         
-        struct method_params_t params;
-        params.t0 = 0.0;
-        params.y0 = (double*)malloc(sizeof(double) * N);
-        params.y = (double*)malloc(sizeof(double) * N);
-        params.t_end = 5.0;
-        params.h = 0.1;
+        struct method_params_t* params = (struct method_params_t*)malloc(sizeof(struct method_params_t));
+        params->f = &f;
+        params->t0 = 0.0;
+        params->y0 = (double*)malloc(sizeof(double) * N);
+        params->y = (double*)malloc(sizeof(double) * N);
+        params->t_end = 5.0;
+        params->h = 0.1;
         for (int i = 0; i < N; i++)
         {
-            params.y0[i] = i;
+            params->y0[i] = i;
         }
 
-        fprintf(file, "rkf45,%d,%.6f\n", N, test_method(&rkf45, params));
-        fprintf(file, "rk2,%d,%.6f\n", N, test_method(&rkf45, params));
-        fprintf(file, "rk4,%d,%.6f\n", N, test_method(&rkf45, params));
+        test_method(&rkf45, params, file, "rkf45");
+        test_method(&rk4, params, file, "rk4");
+        test_method(&rk2, params, file, "rk2");
         
-        free(params.y0);
-        free(params.y);
+        free(params->y0);
+        free(params->y);
+        free(params);
     }
 
     fclose(file);
