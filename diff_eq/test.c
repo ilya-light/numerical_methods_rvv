@@ -1,5 +1,6 @@
 #include <time.h>
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 #include "rk.h"
 
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
     }
     FILE *file = fopen(filename, "w");
 
-    for (int i = 2; i <= 512; i*=2)
+    for (int i = 512; i <= 512; i*=2)
     {
         N = i;
         
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
         params->t0 = 0.0;
         params->y0 = (double*)malloc(sizeof(double) * N);
         params->y = (double*)malloc(sizeof(double) * N);
-        params->t_end = 5.0;
+        params->t_end = 3.0;
         params->h = 0.1;
         for (int i = 0; i < N; i++)
         {
@@ -70,8 +71,11 @@ int main(int argc, char *argv[])
         }
 
         test_method(&rkf45, params, file, "rkf45");
+        printf("rkf45 N %d done\n", N);
         test_method(&rk4, params, file, "rk4");
+        printf("rkf4 N %d done\n", N);
         test_method(&rk2, params, file, "rk2");
+        printf("rkf2 N %d done\n", N);
         
         free(params->y0);
         free(params->y);
