@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
     FILE *file = fopen(filename, "w");
 
-    for (int i = 512; i <= 512; i*=2)
+    for (int i = 2; i <= 512; i*=2)
     {
         N = i;
         

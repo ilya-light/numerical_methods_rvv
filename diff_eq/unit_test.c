@@ -2,6 +2,8 @@
 
 #define N 4
 #define H 0.1
+#define ACCURAСY 1.0E-14
+
 double * y_scalar;
 double * y_rvv;
 double * k1;
@@ -25,7 +27,7 @@ int arrays_equal(double * first, double * second)
     for (int i = 0; i < N; i++)
     {
         double diff = fabs(first[i] - second[i]);
-        if(diff > 1.0E-14)
+        if(diff > ACCURAСY)
         {
             printf("diff %e\n", diff);
             return 0;
