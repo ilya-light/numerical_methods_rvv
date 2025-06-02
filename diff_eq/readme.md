@@ -29,4 +29,13 @@
 
 ```export PATH="$PATH:<path_to_toolchain>/riscv64-linux-x86_64/bin"```
 
+## Компиляция
+Для компиляции необходимо использовать установленный тулчейн. Выполняется команда:
+```riscv64-unknown-linux-gnu-gcc-8.4.0 -o rk.o rk_rvv.c <main_file> -march=rv64gcv0p7 -lm```
+main_file - файл, где находится функция main, в данном случае это либо demo.c, либо unit_test.c
+-march=rv64gcv0p7 - выполняет компиляцию для архитектуры RISC-V с разрядностью 64, добавляя следующие расширения:
+- IMAFD (G)
+- C ()
+
+
 
