@@ -26,6 +26,6 @@
 # Запуск
 ## Тулчейн RISC-V
 Перед запуском необходимо скачать тулчейн для RISC-V на своё устройство на x86. Код написан, используя интринсики RVV 0.7.1, следовательно необходим тулчейн именно под эту версию расширения. Скачать его можно по [ссылке](https://datashare.ed.ac.uk/bitstream/handle/10283/4835/Xuantie-riscv64-linux-x86_64-20210618.tar.gz?sequence=5&isAllowed=y). Это уже скомпилированный тулчейн, и его нужно лишь распаковать и добавить папку bin в PATH:
-export PATH="$PATH:<path_to_toolchain>/riscv64-linux-x86_64/bin"
+export ```PATH="$PATH:<path_to_toolchain>/riscv64-linux-x86_64/bin"```
 
 
