@@ -50,6 +50,6 @@ main_file - файл, где находится функция main, в данн
 ```python3 plot.py```
 
 Пример графика:
-[отношение scalar/RVV rkf45](https://postimg.cc/sBZ7KMWs)
+[![отношение scalar/RVV rkf45](https://i.postimg.cc/GpXKLYh8/2025-06-02-11-38-49.png)](https://postimg.cc/sBZ7KMWs)
 
 
